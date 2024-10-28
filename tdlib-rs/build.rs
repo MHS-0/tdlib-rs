@@ -82,7 +82,7 @@ fn generic_build() {
     let include_dir = format!("{}/include", prefix);
     let lib_dir = format!("{}/lib", prefix);
     let lib_path = {
-        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+        #[cfg(any(target_os = "linux", target_os = "android"))]
         {
             format!("{}/libtdjson.so.{}", lib_dir, TDLIB_VERSION)
         }
