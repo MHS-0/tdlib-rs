@@ -79,12 +79,21 @@ fn copy_local_tdlib() {
 fn generic_build() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let prefix = format!("{}/tdlib", out_dir);
-    let include_dir = format!("{}/include", prefix);
-    let lib_dir = format!("{}/lib", prefix);
+    let os = build_target::target_os().unwrap().as_str().to_owned();
+    let arch = build_target::target_arch().unwrap().as_str().to_owned();
+    let arch = if os.eq("linux") && arch.eq("x86_64") {
+        "x86_64"
+    } else if os.eq("linux") && arch.eq("aarch64") {
+        "aarch64-linux"
+    } else {
+        "aarch64-android"
+    };
+    let lib_dir = format!("{}/{}/lib", prefix, arch);
+    let include_dir = format!("{}/{}/include", prefix, arch);
     let lib_path = {
         #[cfg(any(target_os = "linux", target_os = "android"))]
         {
-            format!("{}/libtdjson.so.{}", lib_dir, TDLIB_VERSION)
+            format!("{}/libtdjson.so", lib_dir)
         }
         #[cfg(any(
             all(target_os = "macos", target_arch = "x86_64"),
@@ -112,7 +121,6 @@ fn generic_build() {
     println!("cargo:rustc-link-search=native={}", lib_dir);
     println!("cargo:include={}", include_dir);
     println!("cargo:rustc-link-lib=dylib=tdjson");
-    println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib_dir);
 }
 
 #[cfg(feature = "download-tdlib")]

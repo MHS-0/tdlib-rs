@@ -133,7 +133,7 @@ fn download_tdlib() {
 /// The function will pass to the `rustc` the following flags:
 /// - `cargo:rustc-link-search=native=.../tdlib/lib`
 /// - `cargo:include=.../tdlib/include`
-/// - `cargo:rustc-link-lib=dylib=tdjson`
+/// - `cargo:rustc-link-lib=static=tdjson_static`
 /// - `cargo:rustc-link-arg=-Wl,-rpath,.../tdlib/lib`
 /// - `cargo:rustc-link-search=native=.../tdlib/bin` (only for Windows x86_64)
 ///
@@ -157,12 +157,21 @@ fn generic_build(lib_path: Option<String>) {
         }
     }
     let prefix = correct_lib_path.to_string();
-    let include_dir = format!("{}/include", prefix);
-    let lib_dir = format!("{}/lib", prefix);
+    let os = build_target::target_os().unwrap().as_str().to_owned();
+    let arch = build_target::target_arch().unwrap().as_str().to_owned();
+    let arch = if os.eq("linux") && arch.eq("x86_64") {
+        "x86_64"
+    } else if os.eq("linux") && arch.eq("aarch64") {
+        "aarch64-linux"
+    } else {
+        "aarch64-android"
+    };
+    let lib_dir = format!("{}/{}/lib", prefix, arch);
+    let include_dir = format!("{}/{}/include", prefix, arch);
     let mut_lib_path = {
         #[cfg(any(target_os = "linux", target_os = "android"))]
         {
-            format!("{}/libtdjson.so.{}", lib_dir, TDLIB_VERSION)
+            format!("{}/libtdjson.so", lib_dir)
         }
         #[cfg(any(
             all(target_os = "macos", target_arch = "x86_64"),
@@ -222,7 +231,6 @@ fn generic_build(lib_path: Option<String>) {
     println!("cargo:rustc-link-search=native={}", lib_dir);
     println!("cargo:include={}", include_dir);
     println!("cargo:rustc-link-lib=dylib=tdjson");
-    println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib_dir);
 }
 
 /// Check if the features are correctly set.
@@ -329,7 +337,7 @@ pub fn build_pkg_config() {
 /// Note that this function will pass to the `rustc` the following flags:
 /// - `cargo:rustc-link-search=native=.../tdlib/lib`
 /// - `cargo:include=.../tdlib/include`
-/// - `cargo:rustc-link-lib=dylib=tdjson`
+/// - `cargo:rustc-link-lib=static=tdjson_static`
 /// - `cargo:rustc-link-arg=-Wl,-rpath,.../tdlib/lib`
 /// - `cargo:rustc-link-search=native=.../tdlib/bin` (only for Windows x86_64)
 ///
@@ -395,7 +403,7 @@ pub fn build_download_tdlib(dest_path: Option<String>) {
 /// The function will pass to the `rustc` the following flags:
 /// - `cargo:rustc-link-search=native=.../tdlib/lib`
 /// - `cargo:include=.../tdlib/include`
-/// - `cargo:rustc-link-lib=dylib=tdjson`
+/// - `cargo:rustc-link-lib=static=tdjson_static`
 /// - `cargo:rustc-link-arg=-Wl,-rpath,.../tdlib/lib`
 /// - `cargo:rustc-link-search=native=.../tdlib/bin` (only for Windows x86_64)
 ///
